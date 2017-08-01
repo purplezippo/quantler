@@ -227,41 +227,48 @@ backtest <- function(trade.info, cash = 0, is.pic = F, is.pic.whole = T, plotlev
   strategy.num <- sum(c(strategy.s > 0, strategy.b > 0))
 
   # 3.2 基准收益（向量）
-  stock.price.win <- stock.price * (cash/stock.price[1])
+  stock.price.win <- bm_return_v(stock.price, cash)
 
   # 3.3 基准收益率 （股票+现金当前价值 - 初始价值）/初始价值
-  benchmark.return <- (last(stock.price)*(cash/stock.price[1]) - cash)/cash
+  benchmark.return <- return_rate(stock.price)
 
   # 3.4 策略交易收益率
-  strategy.return <- (last(total.price) - cash)/cash
+  strategy.return  <- return_rate(total.price)
 
-  # 3.5 日交易基准收益率 （股票+现金当前价值-初始价值）/初始价值
-  benchmark.day.return <- (1 + benchmark.return)^(1/strategy.days) - 1
-  strategy.day.return <- (1 + strategy.return)^(1/strategy.days) - 1
+  # 3.5 日交易基准收益率 （股票+现金当前价值-初始价值)/初始价值
+  benchmark.day.return <- return_rate(stock.price, 'day', strategy.days)
+  strategy.day.return  <- return_rate(total.price, 'day', strategy.days)
 
   # 3.6 基准年化收益(标量)
-  benchmark.annual.return <- (1 + benchmark.day.return)^(250) - 1
+  benchmark.annual.return <- return_rate(stock.price, 'year', strategy.days)
 
   # 3.7 策略年化收益(标量)
-  strategy.annual.return <- (1 + strategy.day.return)^(250) - 1
+  strategy.annual.return  <- return_rate(total.price, 'year', strategy.days)
 
   # 3.8 beta  cov(策略每日收益, 基准每日收益)/var(基准每日收益)
-  beta <- cov(diff(stock.price[loc.day])*(cash/stock.price[1]), diff(total.price[loc.day]))/
-      var(diff(stock.price[loc.day])*(cash/stock.price[1]))
+  # beta <- cov(diff(stock.price[loc.day])*(cash/stock.price[1]), diff(total.price[loc.day]))/
+  #     var(diff(stock.price[loc.day])*(cash/stock.price[1]))
+  beta <- beta_stock(stock.price[loc.day], total.price)
 
   # 3.9 alpha
-  alpha <- strategy.annual.return - (risk.free.rate + beta*(benchmark.annual.return - risk.free.rate))
+  # alpha <- strategy.annual.return - (risk.free.rate + beta*(benchmark.annual.return - risk.free.rate))
+  alpha <- alpha_stock(stock.price = stock.price, cash.begin = cash, trade.value = total.price,
+                       rate = risk.free.rate, trade.days = strategy.days)
 
   # 3.10 Algorithm Volatility（策略波动率）
-  alg.vol <- sqrt(250*var(diff(total.price[loc.day])/total.price[loc.day][-strategy.days])) # 用来测量策略的风险性，波动越大代表策略风险越高。
+  # alg.vol <- sqrt(250*var(diff(total.price[loc.day])/total.price[loc.day][-strategy.days])) # 用来测量策略的风险性，波动越大代表策略风险越高。
+  alg.vol <- algo_vol(total.price[loc.day])
 
   # 3.11夏普比率
-  sharpe.ratio <- (strategy.annual.return - risk.free.rate)/alg.vol
+  # sharpe.ratio <- (strategy.annual.return - risk.free.rate)/alg.vol
+  sharpe.ratio <- sharpe_rate(trade.value = total.price, rate = risk.free.rate, trade.days = strategy.days)
 
   # 3.12信息比率
   # 策略与基准每日收益差值的年化标准差
-  strategy.benchmark.annual.sd <- sd(diff(stock.price[loc.day])*(cash/stock.price[1]) - diff(total.price[loc.day]))
-  info.ratio <- (strategy.annual.return - benchmark.annual.return)/strategy.benchmark.annual.sd
+  # strategy.benchmark.annual.sd <- sd(diff(stock.price[loc.day])*(cash/stock.price[1]) - diff(total.price[loc.day]))
+  # info.ratio <- (strategy.annual.return - benchmark.annual.return)/strategy.benchmark.annual.sd
+  info.ratio <- info_rate(stock.price = stock.price, cash.begin = cash, trade.value = total.price,
+                          trade.days = strategy.days)
 
   # 3.13 基准波动率
   ben.vol <- sqrt(250*var(diff(stock.price[loc.day])/stock.price[loc.day[-length(loc.day)]]))
