@@ -69,12 +69,12 @@ backtest <- function(trade.info, cash = 0, is.pic = F, is.pic.whole = T, plotlev
     if(any(abs(strategy.b - strategy.s) > 2)) stop("Operate direction conflits occur in strategys!")
     if(!all(c(-1,1) %in% unique(strategy.b))) stop("Operate signal miss in strategy.b!")
     if(!all(c(-1,1) %in% unique(strategy.s))) stop("Operate signal miss in strategy.s!")
-  }else if ("strategy.b" %in% names(trade.info)){
+  } else if ("strategy.b" %in% names(trade.info)){
     strategy.type <- c("buy")
     strategy.b <- trade.info$strategy.b
     if(!all(c(-1,1) %in% unique(strategy.b))) stop("Operate signal miss in strategy.b!")
     strategy.s <- c()
-  }else if ("strategy.s" %in% names(trade.info)){
+  } else if ("strategy.s" %in% names(trade.info)){
     strategy.type <- c("sell")
     strategy.s <- trade.info$strategy.s
     if(!all(c(-1,1) %in% unique(strategy.s))) stop("Operate signal miss in strategy.s!")
@@ -246,123 +246,49 @@ backtest <- function(trade.info, cash = 0, is.pic = F, is.pic.whole = T, plotlev
   strategy.annual.return  <- return_rate(total.price, 'year', strategy.days)
 
   # 3.8 beta  cov(策略每日收益, 基准每日收益)/var(基准每日收益)
-  # beta <- cov(diff(stock.price[loc.day])*(cash/stock.price[1]), diff(total.price[loc.day]))/
-  #     var(diff(stock.price[loc.day])*(cash/stock.price[1]))
-  beta <- beta_stock(stock.price[loc.day], total.price)
+  beta <- beta_stock(stock.price[loc.day], cash.begin = cash, trade.value = total.price)
 
   # 3.9 alpha
-  # alpha <- strategy.annual.return - (risk.free.rate + beta*(benchmark.annual.return - risk.free.rate))
   alpha <- alpha_stock(stock.price = stock.price, cash.begin = cash, trade.value = total.price,
                        rate = risk.free.rate, trade.days = strategy.days)
 
   # 3.10 Algorithm Volatility（策略波动率）
-  # alg.vol <- sqrt(250*var(diff(total.price[loc.day])/total.price[loc.day][-strategy.days])) # 用来测量策略的风险性，波动越大代表策略风险越高。
   alg.vol <- algo_vol(total.price[loc.day])
 
   # 3.11夏普比率
-  # sharpe.ratio <- (strategy.annual.return - risk.free.rate)/alg.vol
   sharpe.ratio <- sharpe_rate(trade.value = total.price, rate = risk.free.rate, trade.days = strategy.days)
 
   # 3.12信息比率
   # 策略与基准每日收益差值的年化标准差
-  # strategy.benchmark.annual.sd <- sd(diff(stock.price[loc.day])*(cash/stock.price[1]) - diff(total.price[loc.day]))
-  # info.ratio <- (strategy.annual.return - benchmark.annual.return)/strategy.benchmark.annual.sd
-  info.ratio <- info_rate(stock.price = stock.price, cash.begin = cash, trade.value = total.price,
+  info.ratio <- info_rate(stock.price = stock.price[loc.day], cash.begin = cash,
+                          trade.value = total.price[loc.day],
                           trade.days = strategy.days)
 
   # 3.13 基准波动率
-  ben.vol <- sqrt(250*var(diff(stock.price[loc.day])/stock.price[loc.day[-length(loc.day)]]))
+  # ben.vol <- sqrt(250*var(diff(stock.price[loc.day])/stock.price[loc.day[-length(loc.day)]]))
+  ben.vol <- bench_vol(stock.price[loc.day])  # daily
 
   # 3.14 最大回撤
-  if(length(which(diff(total.price) == 0)) == 0){
-    total.price.uniq <- total.price
-  }else{
-    total.price.uniq <- total.price[-(which(diff(total.price) == 0) + 1)]
-  }
-  loc.raw <- which(diff(total.price) != 0)
-
-  loc.dw.1 <- which(diff(total.price.uniq) < 0)                                             # 下降序列点坐标，极大值居于左端点, 极小值居于右端点
-  loc.dw.1.notcont <- loc.dw.1[c(1, which(diff(loc.dw.1) > 1) + 1)]
-  # total.price.uniq[loc.dw.1.notcont]                                                      # 极大值点
-
-  loc.dw.2 <- which(diff(total.price.uniq) > 0)                                             # 上升序列点坐标，极小值居于左端点
-  loc.dw.2.notcont <- loc.dw.2[c(1, which(diff(loc.dw.2) > 1) + 1)]
-  # total.price.uniq[loc.dw.2.notcont]   # 极小值点
-
-  max.down.loc<-outer(loc.dw.1.notcont, loc.dw.2.notcont, function(x,y){x - y})             # 极大值点坐标小于极小值点的矩阵
-  max.down.value<-outer(loc.dw.1.notcont, loc.dw.2.notcont, function(x,y){total.price.uniq[x] - total.price.uniq[y]})  # 对应的股价差
-
-  # 找到满足条件的最大值
-  id.xlessy <- which(max.down.loc < 0)
-  max.id.loc <- which.max(as.vector(max.down.value)[id.xlessy])
-  max.id <- id.xlessy[max.id.loc]
-  if((max.id %% length(loc.dw.1.notcont))!=0){
-    id.2 <- max.id %/% length(loc.dw.1.notcont) + 1                                         # 列的位置，极小值点的位置
-    id.1 <- max.id %% length(loc.dw.1.notcont)                                              # 除以行的余数，极大值点的位置
-  }else{
-    id.1 <- length(loc.dw.1.notcont)                                                        # 标记能整除，除以行的余数，极大值点的位置
-    id.2 <- max.id %/% length(loc.dw.1.notcont)
-  }
-  max.drawdown <- (total.price.uniq[loc.dw.1.notcont[id.1]] - total.price.uniq[loc.dw.2.notcont[id.2]])/
-    total.price.uniq[loc.dw.1.notcont[id.1]]
-  max.drawdown.loc <- c(loc.raw[loc.dw.1.notcont[id.1]], loc.raw[loc.dw.2.notcont[id.2]])
+  max.dd.temp <- maxdrawdown(trade.value = total.price)
+  max.drawdown <- max.dd.temp$value
+  max.drawdown.loc <- max.dd.temp$loc
   max.down.date <- trade.info$stock.date[max.drawdown.loc]
 
   # 3.15 胜率
-  if(length(strategy.type) == 2){
-    trade.loc.b.2 <- which(strategy.b == -1)
-    trade.loc.b.1 <- which(strategy.b == 1)
 
-    trade.loc.s.2 <- which(strategy.s == -1)
-    trade.loc.s.1 <- which(strategy.s == 1)
+  if (length(strategy.type) == 2){
+    win.rate.b <- win_rate(strategy.signal = strategy.b, trade.value = total.price.b, type = 'buy')
+    win.rate.s <- win_rate(strategy.signal = strategy.s, trade.value = total.price.s, type = 'sell',
+                           weight.s = weight.s, stockp.begin = stock.price[1])
 
-    # 多头交易收益率
-    if(length(trade.loc.b.2) < length(trade.loc.b.1)) trade.loc.b.1 <- trade.loc.b.1[-length(trade.loc.b.1)]
-    pertrade.winrate.b <- (total.price.b[trade.loc.b.2] - total.price.b[trade.loc.b.1])/total.price.b[trade.loc.b.1]
-    # 空头交易收益率
-    # 由于价值变动只在，本期买入和下期卖出时发生变化，因此依然用买入-卖出计算收益
-    # 如果第一个点就做空，那么为了计算收益率就需要在最开始补入对应的买入操作（借股）
-    if(trade.loc.s.2[1] == 1){
-      total.price.s <- c(weight.s*stock.price[1], total.price.s)
-      trade.loc.s.2 <- trade.loc.s.2 + 1
-      trade.loc.s.1 <- c(1, trade.loc.s.1 + 1)
-      if(length(trade.loc.s.1) > length(trade.loc.s.2)) {trade.loc.s.1 <- trade.loc.s.1[-length(trade.loc.s.1)]}
-    } else {
-      # 如果最后一个操作为卖空，意味着卖空信号比买入信号多一个，则将第一个策略定义为买入股票（对齐）
-      if(length(trade.loc.s.2) > length(trade.loc.s.1)) trade.loc.s.1 <- c(1, trade.loc.s.1)
-      # 如果最后一个操作为买入，则将第一个策略定义为买入股票，并剔除最后一个买入信号（对齐）
-      if(length(trade.loc.s.2) == length(trade.loc.s.1)) trade.loc.s.1 <- c(1, trade.loc.s.1[-length(trade.loc.s.1)])
-    }
-    pertrade.winrate.s <- (total.price.s[trade.loc.s.2] - total.price.s[trade.loc.s.1])/total.price.s[trade.loc.s.1]
-    win.rate <- (sum(pertrade.winrate.b > 0) + sum( pertrade.winrate.s > 0))/(length(trade.loc.b.2) + length(trade.loc.s.2))
-  }else if(strategy.type == 'buy'){
-    trade.loc.b.2 <- which(strategy.b == -1)
-    trade.loc.b.1 <- which(strategy.b == 1)
-    # 多头交易收益率
-    if(length(trade.loc.b.2) < length(trade.loc.b.1)) trade.loc.b.1 <- trade.loc.b.1[-length(trade.loc.b.1)]
-    pertrade.winrate.b <- (total.price.b[trade.loc.b.2] - total.price.b[trade.loc.b.1])/total.price.b[trade.loc.b.1]
-    pertrade.winrate.s <- NA
-    win.rate <- sum(pertrade.winrate.b > 0)/length(trade.loc.b.2)
-  }else{
-    trade.loc.s.2 <- which(strategy.s == 1)
-    trade.loc.s.1 <- which(strategy.s == -1)
-    # 空头交易收益率
-    pertrade.winrate.b <- NA
-    if(trade.loc.s.2[1] == 1){
-      total.price.s <- c(weight.s*stock.price[1], total.price.s)
-      trade.loc.s.2 <- trade.loc.s.2 + 1
-      trade.loc.s.1 <- c(1, trade.loc.s.1 + 1)
-    } else {
-      # 如果最后一个操作为卖空，意味着卖空信号比买入信号多一个，则将第一个策略定义为买入股票（对齐）
-      if(length(trade.loc.s.1) > length(trade.loc.s.2)){
-        trade.loc.s.2 <- c(1, trade.loc.s.2)
-      }else if(length(trade.loc.s.2) == length(trade.loc.s.1)){
-      # 如果最后一个操作为买入，则将第一个策略定义为买入股票，并剔除最后一个买入信号（对齐）
-        trade.loc.s.2 <- c(1, trade.loc.s.2[-length(trade.loc.s.2)])
-      }
-    }
-    pertrade.winrate.s <- (total.price.s[trade.loc.s.2] - total.price.s[trade.loc.s.1])/total.price.s[trade.loc.s.1]
-    win.rate <- sum(pertrade.winrate.s > 0)/length(trade.loc.s.1)
+    win.rate <- (win.rate.b[[1]]*win.rate.b[[2]] + win.rate.s[[1]]*win.rate.s[[2]])/(win.rate.b[[2]] + win.rate.s[[2]])
+  } else if (strategy.type == 'buy'){
+    win.rate.b <- win_rate(strategy.signal = strategy.b, trade.value = total.price.b, type = 'buy')
+    win.rate <- win.rate.b[[1]]
+  } else {
+    win.rate.s <- win_rate(strategy.signal = strategy.s, trade.value = total.price.s, type = 'sell',
+                           weight.s = weight.s, stockp.begin = stock.price[1])
+    win.rate <- win.rate.s[[1]]
   }
 
   # 3.16 日胜率
@@ -379,61 +305,65 @@ backtest <- function(trade.info, cash = 0, is.pic = F, is.pic.whole = T, plotlev
       acc.rate.b <- pre_correct(stock.price, strategy.b = strategy.b)[1]
       acc.rate.s <- NA
       # 平均收益率
-      mean.win.rate.b <- mean(pertrade.winrate.b)
+      mean.win.rate.b <- mean(win.rate.b$pertrade.winrate)
       mean.win.rate.s <- NA
     } else {
       acc.rate.s <- pre_correct(stock.price, strategy.s = strategy.s)[2]
       acc.rate.b <- NA
       # 平均收益率
       mean.win.rate.b <- NA
-      mean.win.rate.s <- mean(pertrade.winrate.s)
+      mean.win.rate.s <- mean(win.rate.s$pertrade.winrate)
     }
   }else {
     acc.both <- pre_correct(stock.price, strategy.s = strategy.s, strategy.b = strategy.b)
     acc.rate.b <- acc.both[1]
     acc.rate.s <- acc.both[2]
-    mean.win.rate.b <- mean(pertrade.winrate.b)
-    mean.win.rate.s <- mean(pertrade.winrate.s)
+    mean.win.rate.b <- mean(win.rate.b$pertrade.winrate)
+    mean.win.rate.s <- mean(win.rate.s$pertrade.winrate)
   }
 
   # 3.20 输出
   all.features <- list(benchmark.return, strategy.return, benchmark.day.return, benchmark.day.return,
-                       strategy.day.return, benchmark.annual.return, strategy.annual.return, beta, alpha,
-                       alg.vol, sharpe.ratio,info.ratio, ben.vol, max.drawdown, win.rate, win.day.rate,
-                       win.lose.rate, total.price, stock.price, stock.price.win)
-  names(all.features) <- c("benchmark.return", "strategy.return", "benchmark.day.return", "benchmark.day.return",
-                           "strategy.day.return", "benchmark.annual.return", "strategy.annual.return", "beta", "alpha",
-                           "alg.vol", "sharpe.ratio","info.ratio", "ben.vol", "max.drawdown", "win.rate", "win.day.rate",
+                       strategy.day.return, benchmark.annual.return, strategy.annual.return, beta,
+                       alpha, alg.vol, sharpe.ratio,info.ratio, ben.vol, max.drawdown, win.rate,
+                       win.day.rate, win.lose.rate, total.price, stock.price, stock.price.win)
+  names(all.features) <- c("benchmark.return", "strategy.return", "benchmark.day.return",
+                           "benchmark.day.return","strategy.day.return", "benchmark.annual.return",
+                           "strategy.annual.return", "beta", "alpha","alg.vol", "sharpe.ratio",
+                           "info.ratio", "ben.vol", "max.drawdown", "win.rate", "win.day.rate",
                            "win.lose.rate", "strategy.income", "stock.price", "stock.benchmarkwin")
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~##---------------------------------------------------------------####
   # (三)绘图####
-  # （1）加载包
   if (is.pic){
    #（2）绘图数据集
    # 2.1 收益率 VS 基准收益率
-
    if(plotlevel == "1day"){
      if(length(strategy.type) == 2){
        temp.df1 <- data.frame(trade.info[loc.day, c("stock.price", "stock.date", "strategy.b", "strategy.s")],
-                            strategy.income = total.price[loc.day], stock.benchmarkwin = stock.price.win[loc.day])
-
+                              strategy.income = total.price[loc.day],
+                              stock.benchmarkwin = stock.price.win[loc.day])
      }else if(strategy.type == "buy"){
        temp.df1 <- data.frame(trade.info[loc.day, c("stock.price", "stock.date", "strategy.b")],
-                              strategy.income = total.price[loc.day], stock.benchmarkwin = stock.price.win[loc.day])
+                              strategy.income = total.price[loc.day],
+                              stock.benchmarkwin = stock.price.win[loc.day])
      }else{
        temp.df1 <- data.frame(trade.info[loc.day, c("stock.price", "stock.date", "strategy.s")],
-                              strategy.income = total.price[loc.day], stock.benchmarkwin = stock.price.win[loc.day])
+                              strategy.income = total.price[loc.day],
+                              stock.benchmarkwin = stock.price.win[loc.day])
      }
    }else if(plotlevel == "1min" & strategy.level == "1min"){
      if(length(strategy.type) == 2){
        temp.df1 <- data.frame(trade.info[, c("stock.price", "stock.date", "stock.time", "strategy.b", "strategy.s")],
-                            strategy.income = total.price, stock.benchmarkwin = stock.price.win)
+                              strategy.income = total.price,
+                              stock.benchmarkwin = stock.price.win)
      }else if(strategy.type == "buy"){
        temp.df1 <- data.frame(trade.info[, c("stock.price", "stock.date", "stock.time", "strategy.b")],
-                              strategy.income = total.price, stock.benchmarkwin = stock.price.win)
+                              strategy.income = total.price,
+                              stock.benchmarkwin = stock.price.win)
      }else{
        temp.df1 <- data.frame(trade.info[, c("stock.price", "stock.date", "stock.time","strategy.s")],
-                              strategy.income = total.price, stock.benchmarkwin = stock.price.win)
+                              strategy.income = total.price,
+                              stock.benchmarkwin = stock.price.win)
      }
      temp.df1$id <- 1:nrow(temp.df1)
      temp.df1.breaks <- round(seq(1,nrow(temp.df1), length.out = 5))
@@ -451,16 +381,15 @@ backtest <- function(trade.info, cash = 0, is.pic = F, is.pic.whole = T, plotlev
                      "Information Ratio(%)", "Max Drawdown(%)", "Beta", "Alpha", "Win Rate(%)",
                      "Daily Win Rate(%)", "Win Loss Ratio(%)", "Correct Rate Long(%)","Correct Rate Short(%)")
    temp.df3 <- data.frame(feature = feature.name,
-                        value = round(c(benchmark.return*100, strategy.return*100, benchmark.day.return*100,
-                                        strategy.day.return*100,benchmark.annual.return*100,
-                                        strategy.annual.return*100, mean.win.rate.b*100, mean.win.rate.s*100,
-                                        alg.vol*100, ben.vol*100, sharpe.ratio*100, info.ratio*100,
-                                        max.drawdown*100, beta, alpha, win.rate*100,
-                                        win.day.rate*100, win.lose.rate*100,acc.rate.b*100,
-                                        acc.rate.s*100),2),
-                        col = c(1,2,1,2,1,2,1,2,3,3,3,3,3,3,3,3,3,3,3,3),
-                        id = length(feature.name):1,
-                        stringsAsFactors = F)
+                          value = round(c(benchmark.return, strategy.return, benchmark.day.return,
+                                          strategy.day.return, benchmark.annual.return,
+                                          strategy.annual.return, mean.win.rate.b, mean.win.rate.s,
+                                          alg.vol, ben.vol, sharpe.ratio, info.ratio, max.drawdown,
+                                          beta/100, alpha/100, win.rate, win.day.rate, win.lose.rate,
+                                          acc.rate.b, acc.rate.s) * 100, 2),
+                          col = c(1,2,1,2,1,2,1,2,3,3,3,3,3,3,3,3,3,3,3,3),
+                          id = length(feature.name):1,
+                          stringsAsFactors = F)
    if(!is.simple){                                                                   # 简化显示输出
      # 2.3 交易分布，汇总
      if(length(strategy.type) == 1){
@@ -537,7 +466,6 @@ backtest <- function(trade.info, cash = 0, is.pic = F, is.pic.whole = T, plotlev
            hold.s <- length(s[s == 0])
            sell.s <- -length(s[s < 0])
            c(buy.b, hold.b, sell.b, buy.s, hold.s, sell.s)
-
          })
          temp.df4 <- as.data.frame(temp.xts4.daily)
          names(temp.df4) <-  c("buy.b", "hold.b", "sell.b","buy.s", "hold.s", "sell.s")
@@ -553,7 +481,6 @@ backtest <- function(trade.info, cash = 0, is.pic = F, is.pic.whole = T, plotlev
            hold.s <- length(s[s == 0])
            sell.s <- -length(s[s < 0])
            c(buy.b, hold.b, sell.b, buy.s, hold.s, sell.s)
-
          })
          temp.df4 <- as.data.frame(temp.xts4.daily)
          names(temp.df4) <-  c("buy.b", "hold.b", "sell.b","buy.s", "hold.s", "sell.s")
@@ -574,14 +501,16 @@ backtest <- function(trade.info, cash = 0, is.pic = F, is.pic.whole = T, plotlev
 
      # 2.4 收益率数据
      if(length(strategy.type) > 1){
-       temp.df6.s <- data.frame(total.price.rate = pertrade.winrate.s,             # 每笔交易收益率
-                                stock.time = trade.info$stock.time[trade.loc.s.2], # 交易完成时间
+
+       temp.df6.s <- data.frame(total.price.rate = win.rate.s$pertrade.winrate,             # 每笔交易收益率
+                                stock.time = trade.info$stock.time[which(strategy.s == -1)], # 交易完成时间
                                 class = "c.short",rate = tax.rate, stringsAsFactors = F)
-       temp.df6.b <- data.frame(total.price.rate = pertrade.winrate.b,
-                                stock.time = trade.info$stock.time[trade.loc.b.2],
+       temp.df6.b <- data.frame(total.price.rate = win.rate.b$pertrade.winrate,
+                                stock.time = trade.info$stock.time[which(strategy.b == -1)],
                                 class = 'b.long',rate = tax.rate, stringsAsFactors = F)
 
-       temp.df6.temp <- full_join(temp.df6.s[,c("stock.time","total.price.rate")],temp.df6.b[,c("stock.time","total.price.rate")], by = "stock.time")
+       temp.df6.temp <- full_join(temp.df6.s[,c("stock.time","total.price.rate")],
+                                  temp.df6.b[,c("stock.time","total.price.rate")], by = "stock.time")
        temp.df6.temp$total.price.rate.x[is.na(temp.df6.temp$total.price.rate.x)] <- 0
        temp.df6.temp$total.price.rate.y[is.na(temp.df6.temp$total.price.rate.y)] <- 0
        temp.rate <- temp.df6.temp$total.price.rate.x + temp.df6.temp$total.price.rate.y
@@ -590,15 +519,16 @@ backtest <- function(trade.info, cash = 0, is.pic = F, is.pic.whole = T, plotlev
 
        temp.df6.all <- data.frame(stock.time = temp.df6.temp$stock.time,
                                   total.price.rate = temp.rate,
-                                  class = "a.comprehensive", rate = temp.df6.temp$rate, stringsAsFactors = F)
+                                  class = "a.both",
+                                  rate = temp.df6.temp$rate, stringsAsFactors = F)
        temp.df6 <- bind_rows(temp.df6.all, temp.df6.b, temp.df6.s)
      }else if(strategy.type == "buy"){
-       temp.df6 <- data.frame(total.price.rate = pertrade.winrate.b,
-                              stock.time = trade.info$stock.time[trade.loc.b.2],
+       temp.df6 <- data.frame(total.price.rate = win.rate.b$pertrade.winrate,
+                              stock.time = trade.info$stock.time[which(strategy.b == -1)],
                               class = 'b.buy',rate = tax.rate, stringsAsFactors = F)
      }else{
-       temp.df6 <- data.frame(total.price.rate = pertrade.winrate.s,
-                              stock.time = trade.info$stock.time[trade.loc.s.2],
+       temp.df6 <- data.frame(total.price.rate = win.rate.s$pertrade.winrate,
+                              stock.time = trade.info$stock.time[which(strategy.s == -1)],
                               class = "c.short",rate = tax.rate, stringsAsFactors = F)
      }
      # 收益率统计
@@ -622,7 +552,7 @@ backtest <- function(trade.info, cash = 0, is.pic = F, is.pic.whole = T, plotlev
      panel.grid.minor = element_line(colour = "grey10", linetype = "dashed"),
      axis.text = element_text(face = "bold", size = 10, colour = "orange"),
      plot.background = element_rect(fill = "black",colour = "black",size = 2),
-     plot.title = element_text(face = "bold",size = 14, colour = "gold", hjust = .5)
+     plot.title = element_text(face = "bold",size = 12, colour = "gold", hjust = .5)
    )
 
    theme2 <- theme(
@@ -631,7 +561,7 @@ backtest <- function(trade.info, cash = 0, is.pic = F, is.pic.whole = T, plotlev
      panel.grid.major = element_blank(),
      panel.grid.minor = element_blank(),
      strip.background = element_rect(fill = "darkmagenta",colour = "black"),
-     strip.text = element_text(face = "bold",size = 14, colour = "gold"),
+     strip.text = element_text(face = "bold",size = 10, colour = "gold"),
      legend.background = element_rect(fill = "black", colour = "black"),
      legend.text = element_text(colour = "gold"),
      axis.text = element_text(face = "bold", size = 12, colour = "orange"),
@@ -650,8 +580,8 @@ backtest <- function(trade.info, cash = 0, is.pic = F, is.pic.whole = T, plotlev
      panel.grid.minor.y = element_line(colour = "grey40", linetype = "dashed"),
      axis.text.x = element_text(face = "bold", size = 12, colour = "orange"),
      axis.text.x.top = element_text(face = "bold", size = 12, colour = "red"),
-     axis.text.y = element_text(face = "bold", size = 14, colour = "orange"),
-     axis.text.y.right = element_text(face = "bold", size = 15, colour = "red"),
+     axis.text.y = element_text(face = "bold", size = 12, colour = "orange"),
+     axis.text.y.right = element_text(face = "bold", size = 12, colour = "red"),
      plot.background = element_rect(fill = "black",colour = "black",size = 2),
      plot.title = element_text(face = "bold",size = 12, colour = "gold", hjust = .5)
    )
@@ -666,8 +596,10 @@ backtest <- function(trade.info, cash = 0, is.pic = F, is.pic.whole = T, plotlev
      pic2 <- ggplot(temp.df1)+                                                                                            # b.回撤
        geom_hline(yintercept = cash , col = "orange", size = .5)+theme1+
        geom_line(aes(x = stock.date, y = strategy.income), col = "gold")+
-       geom_point(data  = temp.df1[max.drawdown.loc,],aes(x = stock.date, y = strategy.income), col = "lemonchiffon", size = 2)+
-       geom_line(data  = temp.df1[max.drawdown.loc,],aes(x = stock.date, y = strategy.income), col = "greenyellow", size = 1)+
+       geom_point(data  = temp.df1[max.drawdown.loc,],
+                  aes(x = stock.date, y = strategy.income), col = "lemonchiffon", size = 2)+
+       geom_line(data  = temp.df1[max.drawdown.loc,],
+                  aes(x = stock.date, y = strategy.income), col = "greenyellow", size = 1)+
        ggtitle(paste("Strategy return : max drawdown: ", round(max.drawdown*100,2),"%",sep = ""))
      pic4 <- ggplot(temp.df1)+                                                                                            # c.超额收益
        geom_hline(yintercept = 0 , col = "orange", size = .5)+
@@ -683,8 +615,10 @@ backtest <- function(trade.info, cash = 0, is.pic = F, is.pic.whole = T, plotlev
      pic2 <- ggplot(temp.df1)+                                                                                            # b.回撤
        geom_hline(yintercept = cash , col = "orange", size = .5)+theme1+
        geom_line(aes(x = id, y = strategy.income), col = "gold")+
-       geom_point(data  = temp.df1[max.drawdown.loc,],aes(x = id, y = strategy.income), col = "lemonchiffon", size = 2)+
-       geom_line(data  = temp.df1[max.drawdown.loc,],aes(x = id, y = strategy.income), col = "greenyellow", size = 1)+
+       geom_point(data  = temp.df1[max.drawdown.loc,],
+                  aes(x = id, y = strategy.income), col = "lemonchiffon", size = 2)+
+       geom_line(data  = temp.df1[max.drawdown.loc,],
+                 aes(x = id, y = strategy.income), col = "greenyellow", size = 1)+
        scale_x_continuous(breaks = temp.df1.breaks, labels = temp.df1$stock.date[temp.df1.breaks])+
        ggtitle(paste("Strategy return : max drawdown: ", round(max.drawdown*100,2),"%",sep = ""))
      pic4 <- ggplot(temp.df1)+                                                                                           # c.超额收益
@@ -702,14 +636,16 @@ backtest <- function(trade.info, cash = 0, is.pic = F, is.pic.whole = T, plotlev
      geom_bar(stat = "identity", aes(x = id, y = value, fill = factor(col)), width = .25)+
      geom_point(aes(x = id, y = value, col = factor(col)), size = 6)+
      scale_fill_manual(values = c("1" = "red", "2" = "gold", "3" = "royalblue3"))+
-     scale_x_continuous(position = "bottom", expand = c(0.025, 0),breaks = nrow(temp.df3):1, labels = temp.df3$feature,
-                           sec.axis = sec_axis(~ ., name = "", breaks = nrow(temp.df3):1, labels = temp.df3$value))+
+     scale_x_continuous(position = "bottom", expand = c(0.025, 0),breaks = nrow(temp.df3):1,
+                        labels = temp.df3$feature,
+                        sec.axis = sec_axis(~ ., name = "", breaks = nrow(temp.df3):1, labels = temp.df3$value))+
      ggtitle(paste("Stock Code:", trade.info$wind_code[1]))+
      coord_flip()
    if(!is.simple){
      if(length(strategy.type) == 1){                                                                                     # e.交易分布
        pic5 <- ggplot(temp.df4.long)+
-         geom_bar(aes(x = date, y = value, fill = variable), width = .8,stat = "identity", position = "dodge")+
+         geom_bar(aes(x = date, y = value, fill = variable), width = .8,stat = "identity",
+                  position = "dodge")+
          geom_hline(yintercept = 0 , col = "orange", size = .5)+theme2+
          scale_fill_manual(values = c("sell" = "royalblue3", "buy" = "red"))
        if(strategy.type == "buy") pic5 <- pic5 + ggtitle("Trade distribution of long position")
@@ -717,23 +653,28 @@ backtest <- function(trade.info, cash = 0, is.pic = F, is.pic.whole = T, plotlev
      }else{
        pic5 <- ggplot(temp.df4.long)+
          facet_wrap(~class, nrow = 2,strip.position = "left")+
-         geom_bar(aes(x = date, y = value, fill = variable), width = .8,stat = "identity", position = "dodge")+
+         geom_bar(aes(x = date, y = value, fill = variable), width = .8,stat = "identity",
+                  position = "dodge")+
          geom_hline(yintercept = 0 , col = "orange", size = .5)+theme2+
          scale_fill_manual(values = c("sell.b" = "royalblue3", "buy.b" = "red","sell.s" = "royalblue1", "buy.s" = "orangered"))
      }
 
      if(length(strategy.type) == 1){                                                                                     # f.交易次数
        pic6 <- ggplot(temp.df5.short)+
-         geom_bar(aes(x = reorder(variable,V1), y = V1, fill = reorder(variable,V1)), stat = "identity", width = .8)+
-         geom_text(aes(x = reorder(variable,V1), y = max(V1)/2, label = V1), col = "orange", size = 8)+theme2+
+         geom_bar(aes(x = reorder(variable,V1), y = V1, fill = reorder(variable,V1)),
+                  stat = "identity", width = .8)+
+         geom_text(aes(x = reorder(variable,V1), y = max(V1)/2, label = V1),
+                   col = "orange", size = 8)+theme2+
          scale_fill_manual(name = NULL,values = c("buy" = "red","hold" = "mediumblue", "sell" = "royalblue3"))
        if(strategy.type == "buy") pic6 <- pic6 + ggtitle("Trade num of long position")
        if(strategy.type == "sell") pic6 <- pic6 + ggtitle("Trade num of short position")
      }else{
        pic6 <- ggplot(temp.df5.short)+
          facet_wrap(~class, ncol = 1, strip.position = "left")+
-         geom_bar(aes(x = reorder(state,V1), y = V1, fill = reorder(state,V1)), stat = "identity", width = .8)+
-         geom_text(aes(x = reorder(state,V1), y = max(V1)/2, label = V1), col = "orange", size = 8)+ theme2 +
+         geom_bar(aes(x = reorder(state,V1), y = V1, fill = reorder(state,V1)),
+                  stat = "identity", width = .8)+
+         geom_text(aes(x = reorder(state,V1), y = max(V1)/2, label = V1),
+                   col = "orange", size = 5)+ theme2 +
          scale_fill_manual(name = NULL,values = c("buy" = "red","hold" = "mediumblue", "sell" = "royalblue3"))+
          ggtitle("Trade Number")
      }
@@ -746,7 +687,7 @@ backtest <- function(trade.info, cash = 0, is.pic = F, is.pic.whole = T, plotlev
        geom_line(aes(x = stock.time, y = rate), col = "orange", linetype = "dashed")+
        geom_line(aes(x = stock.time, y = -rate), col = "orange", linetype = "dashed")+
        geom_text(data = temp.df6.rate, aes(x = time, y = y, label = value), size = 4, col = "orange")+theme2+
-       scale_color_manual(values = c("a.comprehensive" = "greenyellow", "b.long" = "orangered", "c.short" = "royalblue1"))
+       scale_color_manual(values = c("a.both" = "greenyellow", "b.long" = "orangered", "c.short" = "royalblue1"))
    }
 
    pic0 <- ggplot()+theme1
@@ -754,14 +695,14 @@ backtest <- function(trade.info, cash = 0, is.pic = F, is.pic.whole = T, plotlev
    if (is.simple){
      if(is.pic.whole){
        lay <- rbind(c(1,1,2,2,2,2),c(1,1,2,2,2,2), c(1,1,3,3,4,4))
-       pic <- arrangeGrob(pic3, pic1, pic4, pic2, ncol = 2,layout_matrix = lay)
+       pic <- gridExtra::arrangeGrob(pic3, pic1, pic4, pic2, ncol = 2,layout_matrix = lay)
      }else{
        pic <- list('pic1' = pic1, 'pic2' = pic2, 'pic3' = pic3, 'pic4' = pic4)
      }
    } else {
      if(is.pic.whole){
        lay <- rbind(c(1,1,2,2,2,2),c(1,1,2,2,2,2),c(1,1,3,3,3,3),c(5,5,5,6,4,4),c(5,5,5,7,7,7))                           # h.组合绘图
-       pic <- arrangeGrob(pic3, pic1, pic4, pic2, pic7, pic6, pic5, ncol = 2,layout_matrix = lay)
+       pic <- gridExtra::arrangeGrob(pic3, pic1, pic4, pic2, pic7, pic6, pic5, ncol = 2,layout_matrix = lay)
      }else{
        pic <- list('pic1' = pic1, 'pic2' = pic2, 'pic3' = pic3, 'pic4' = pic4, 'pic5' = pic5, 'pic6' = pic6, 'pic7' = pic7)
      }
