@@ -20,6 +20,5 @@ a list with two elements of 'value' and 'loc'.
 \examples{
 data(sh600000)
 maxdd <- maxdrawdown(sh600000$close/10000)
-maxdd
 
 }

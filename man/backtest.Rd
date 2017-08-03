@@ -32,3 +32,8 @@ A list contains the information of trading results.
 \description{
 Make judgements of an input quantler obj.
 }
+\examples{
+data(stradeinfo_bp)
+bt <- backtest(stradeinfo_bp, cash = 100000, is.pic = T, is.pic.whole = T)
+plot(bt$pic)
+}

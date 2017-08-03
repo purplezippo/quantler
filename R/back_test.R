@@ -11,8 +11,11 @@
 #' @param is.simple Boolean values of True or False, which means if the judgement should be done in
 #'   a simple way to run faster, only valied when is.pic is True.
 #' @return A list contains the information of trading results.
+#' @examples
+#' data(stradeinfo_bp)
+#' bt <- backtest(stradeinfo_bp, cash = 100000, is.pic = T, is.pic.whole = T)
+#' plot(bt$pic)
 #' @export
-
 backtest <- function(trade.info, cash = 0, is.pic = F, is.pic.whole = T, plotlevel = "1day",
                         is.tax = T, tax.rate = 0.003, is.simple = F){
   # info of pars:

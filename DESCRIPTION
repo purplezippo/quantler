@@ -6,7 +6,8 @@ Authors@R: person('Zhen', 'Ji', email = '1059779096@qq.com', role = c('aut', 'cr
 Description: Useful tools for quant analysis.
 Depends: 
     R (>= 3.3.0),
-    stats
+    stats,
+    methods
 Imports:
     plyr,
     dplyr,

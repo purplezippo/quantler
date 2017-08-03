@@ -4,10 +4,15 @@
 quantler <- setClass('quantler', slots = list(trade.info = 'data.frame'))
 
 
-#' @describeIn quantler judgement if an object is quantler
-is.quantler <- function(object){}
-setMethod('is.quantler', 'quantler',
-          function(object){
-            inherits(object, "quantler")
-          }
-          )
+#' Is an object a quantler Object?
+#'
+#' Checks for quantler objects.
+#'
+#' @param object An object.
+#'
+#' @return A logical value. TRUE when the input is a quantler object and FALSE
+#'   otherwise.
+is.quantler <- function(object){
+  inherits(object, 'quantler')
+}
+
