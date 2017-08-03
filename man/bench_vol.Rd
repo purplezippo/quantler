@@ -7,8 +7,8 @@
 bench_vol(stock.price)
 }
 \arguments{
-\item{stock.price}{a numeric series in the form of vector, which consists of daily data of stock
-price}
+\item{stock.price}{a numeric series in the form of vector, which consists of
+daily data of stock price}
 }
 \description{
 Compute Benchmark Volatility

@@ -7,7 +7,8 @@
 bm_return_v(stock.price, cash.begin)
 }
 \arguments{
-\item{stock.price}{Vector of a stock price series, time level could be 1day, 1hour or 1min.}
+\item{stock.price}{Vector of a stock price series, time level could be 1day,
+1hour or 1min.}
 
 \item{cash.begin}{Cash used at begining of a trade.}
 }
