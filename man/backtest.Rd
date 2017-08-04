@@ -8,23 +8,28 @@ backtest(trade.info, cash = 0, is.pic = F, is.pic.whole = T,
   plotlevel = "1day", is.tax = T, tax.rate = 0.003, is.simple = F)
 }
 \arguments{
-\item{trade.info}{An quantler object contains the signal of trade information and stock data.}
+\item{trade.info}{An quantler object contains the signal of trade information
+and stock data.}
 
 \item{cash}{Trade money at start.}
 
 \item{is.pic}{Plot results or not.}
 
-\item{is.pic.whole}{Should the pic output be in one piece together or in a list which contains
-all segments of different pics, only valied when is.pic is True.}
+\item{is.pic.whole}{Should the pic output be in one piece together or in a
+list which contains all segments of different pics, only valied when is.pic
+is True.}
 
-\item{plotlevel}{Values in one of "1min", "60mins", "1day", only valied when is.pic is True.}
+\item{plotlevel}{Values in one of "1min", "60mins", "1day", only valied when
+is.pic is True.}
 
-\item{is.tax}{Boolean values of True or False, add trading commission or not.}
+\item{is.tax}{Boolean values of True or False, add trading commission or
+not.}
 
 \item{tax.rate}{Tax rate per trade, only valide when set is.tax to True.}
 
-\item{is.simple}{Boolean values of True or False, which means if the judgement should be done in
-a simple way to run faster, only valied when is.pic is True.}
+\item{is.simple}{Boolean values of True or False, which means if the
+judgement should be done in a simple way to run faster, only valied when
+is.pic is True.}
 }
 \value{
 A list contains the information of trading results.

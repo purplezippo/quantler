@@ -7,13 +7,16 @@
 pre_correct(stock.price = NA, strategy.b = NA, strategy.s = NA)
 }
 \arguments{
-\item{stock.price}{a one dimension vector of numeric data, which represents a time series of stock price.}
+\item{stock.price}{a one dimension vector of numeric data, which represents a
+time series of stock price.}
 
-\item{strategy.b}{the trade signal of buy operation consists of a one dimension vector contians integer
-values of -1,0,1, of which '-1' equals to 'sell','0' equals to 'hold' and '1' equals to 'buy'.}
+\item{strategy.b}{the trade signal of buy operation consists of a one
+dimension vector contians integer values of -1,0,1, of which '-1' equals to
+'sell','0' equals to 'hold' and '1' equals to 'buy'.}
 
-\item{strategy.s}{the trade signal of sell operation consists of a one dimension vector contians integer
-values of -1,0,1, of which '-1' equals to 'sell','0' equals to 'hold' and '1' equals to 'buy'.}
+\item{strategy.s}{the trade signal of sell operation consists of a one
+dimension vector contians integer values of -1,0,1, of which '-1' equals to
+'sell','0' equals to 'hold' and '1' equals to 'buy'.}
 }
 \value{
 a vector with two values represent

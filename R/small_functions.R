@@ -9,7 +9,6 @@ bm_return_v <- function(stock.price, cash.begin){
   bm.return
 }
 
-
 #' Return rate
 #' @param stock.price Vector of a stock price series, time level could be 1day,
 #'   1hour or 1min.

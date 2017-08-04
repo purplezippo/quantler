@@ -1,15 +1,20 @@
 #' Make judgements of an input quantler obj.
 #'
-#' @param trade.info An quantler object contains the signal of trade information and stock data.
+#' @param trade.info An quantler object contains the signal of trade information
+#'   and stock data.
 #' @param cash Trade money at start.
 #' @param is.pic Plot results or not.
-#' @param is.pic.whole Should the pic output be in one piece together or in a list which contains
-#'   all segments of different pics, only valied when is.pic is True.
-#' @param plotlevel Values in one of "1min", "60mins", "1day", only valied when is.pic is True.
-#' @param is.tax  Boolean values of True or False, add trading commission or not.
+#' @param is.pic.whole Should the pic output be in one piece together or in a
+#'   list which contains all segments of different pics, only valied when is.pic
+#'   is True.
+#' @param plotlevel Values in one of "1min", "60mins", "1day", only valied when
+#'   is.pic is True.
+#' @param is.tax  Boolean values of True or False, add trading commission or
+#'   not.
 #' @param tax.rate Tax rate per trade, only valide when set is.tax to True.
-#' @param is.simple Boolean values of True or False, which means if the judgement should be done in
-#'   a simple way to run faster, only valied when is.pic is True.
+#' @param is.simple Boolean values of True or False, which means if the
+#'   judgement should be done in a simple way to run faster, only valied when
+#'   is.pic is True.
 #' @return A list contains the information of trading results.
 #' @examples
 #' data(stradeinfo_bp)
