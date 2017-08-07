@@ -3,9 +3,6 @@ NULL
 
 
 
-
-
-
 #' Is an object a quantler object?
 #'
 #' Checks for quantler objects.

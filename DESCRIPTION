@@ -7,13 +7,13 @@ Description: Useful tools for quant analysis.
 Depends:
     R (>= 3.3.0),
     stats,
-    methods
-Imports:
-    plyr,
-    dplyr,
-    ggplot2,
-    reshape2,
+    methods,
     xts,
+    plyr,
+    ggplot2
+Imports:
+    dplyr,
+    reshape2,
     gridExtra
 Suggests: 
     knitr,
@@ -26,6 +26,7 @@ RoxygenNote: 6.0.1
 VignetteBuilder: knitr
 Collate: 
     'back_test.R'
+    'back_test00.R'
     'class-def.R'
     'class-quantler-method.R'
     'correct_pre.R'
