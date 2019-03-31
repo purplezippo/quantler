@@ -1,0 +1,35 @@
+Package: quantler
+Type: Package
+Title: Quant Develop Tools
+Version: 0.0.0.9000
+Authors@R: person('Zhen', 'Ji', email = '1059779096@qq.com', role = c('aut', 'cre')) 
+Description: Useful tools for quant analysis.
+Depends:
+    R (>= 3.3.0),
+    stats,
+    methods,
+    xts,
+    plyr,
+    ggplot2
+Imports:
+    dplyr,
+    reshape2,
+    gridExtra
+Suggests: 
+    knitr,
+    rmarkdown,
+    testthat
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.1
+VignetteBuilder: knitr
+Collate: 
+    'back_test.R'
+    'back_test00.R'
+    'class-def.R'
+    'class-quantler-method.R'
+    'correct_pre.R'
+    'plot_fun.R'
+    'quantler.R'
+    'utils.R'
