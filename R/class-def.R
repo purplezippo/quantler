@@ -27,4 +27,5 @@ quantler <- setClass(
 #' @export
 is.quantler <- function(object){
   # inherits(object, 'quantler')
+  (class(object) == 'quantler')
 }
