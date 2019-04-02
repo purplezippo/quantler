@@ -50,6 +50,6 @@ Trade.info must be a data frame in the form of:
 }
 \examples{
 data(stradeinfo_bp)
-bt <- backtest(stradeinfo_bp, cash = 100000, is.pic = T, is.pic.whole = T)
+bt <- backtest(stradeinfo_bp, cash = 100000)
 plot(bt$pic)
 }

@@ -27,6 +27,7 @@ setMethod(
     if (is.na(is.simple) || !is.logical(is.simple)) stop("Not correct form of is.simple")
     if (is.na(segments) || !is.logical(segments)) stop("Not correct form of segments")
 
+
     trade.info <- x@trade.info
     stock.date <- trade.info$stock.date
     len <- nrow(trade.info)
@@ -82,6 +83,7 @@ setMethod(
       temp.df1$id <- 1:nrow(temp.df1)
       temp.df1.breaks <- round(seq(1, nrow(temp.df1), length.out = 5))
     } else {
+
       stop("Plot level dose not match the given data!")
     }
 
@@ -304,6 +306,7 @@ setMethod(
           value = paste(round(c(up, down) * 100, 1), "%", sep = ""),
           y = c(yup, ydown)
         )
+
       })
       temp.df6.rate$time <- min(temp.df6$stock.time)
     }
@@ -541,6 +544,7 @@ setMethod(
           "pic1" = pic1, "pic2" = pic2, "pic3" = pic3, "pic4" = pic4,
           "pic5" = pic5, "pic6" = pic6, "pic7" = pic7
           )
+
         return(pic)
       }
     }
@@ -549,3 +553,4 @@ setMethod(
     # print(pic)
   }
 )
+

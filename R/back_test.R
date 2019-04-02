@@ -420,3 +420,4 @@ backtest <- function(trade.info, cash = 0, is.tax = T, tax.rate = 0.003) {
   return(temp)
   # return(all.features)
 }
+
