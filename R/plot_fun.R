@@ -432,7 +432,7 @@ setMethod(
         labels = temp.df3$feature,
         sec.axis = sec_axis(~., name = "", breaks = nrow(temp.df3):1, labels = temp.df3$value)
       ) +
-      ggtitle(paste("Stock Code:", trade.info$wind_code[1])) +
+      ggtitle(paste("Stock Code:", trade.info$stock.code[1])) +
       coord_flip()
 
     if (!is.simple) {

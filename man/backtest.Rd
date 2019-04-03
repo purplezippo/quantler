@@ -39,7 +39,7 @@ Make judgements of an input quantler obj.
 \details{
 Trade.info must be a data frame in the form of:
   data.frame(
-   wind_code(character),
+   stock.code(character),
    stock.name(character),
    stock.price(numeric),
    stock.time(POSIXCT("yyyy-mm-dd hh:mm")),

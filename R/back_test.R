@@ -18,7 +18,7 @@
 #' @return A list contains the information of trading results.
 #' @details Trade.info must be a data frame in the form of:
 #'   data.frame(
-#'    wind_code(character),
+#'    stock.code(character),
 #'    stock.name(character),
 #'    stock.price(numeric),
 #'    stock.time(POSIXCT("yyyy-mm-dd hh:mm")),
@@ -28,9 +28,9 @@
 #'    )
 #'
 #' @examples
-#' data(stradeinfo_bp)
-#' bt <- backtest(stradeinfo_bp, cash = 100000)
-#' plot(bt$pic)
+#' data(strategy_sh600000)
+#' bt <- backtest(strategy_sh600000, cash = 100000)
+#' plot(bt)
 #' @export
 backtest <- function(trade.info, cash = 0, is.tax = T, tax.rate = 0.003) {
 
@@ -39,7 +39,7 @@ backtest <- function(trade.info, cash = 0, is.tax = T, tax.rate = 0.003) {
   # (1) parms check ####
   if (!is.data.frame(trade.info)) {
     stop("trade.info must be a data frame")
-  } else if (!all(c("wind_code", "stock.name", "stock.price", "stock.time", "stock.date") %in% names(trade.info))) {
+  } else if (!all(c("stock.code", "stock.name", "stock.price", "stock.time", "stock.date") %in% names(trade.info))) {
     stop("components in trade.info are not correct")
   }
   if (class(trade.info$stock.date) != "Date") {

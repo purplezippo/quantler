@@ -30,8 +30,6 @@ Collate:
     'class-def.R'
     'class-quantler-method.R'
     'correct_pre.R'
-    'hello.R'
     'plot_fun.R'
     'quantler.R'
-    'small_functions.R'
     'utils.R'
